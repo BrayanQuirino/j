@@ -1,0 +1,69 @@
+---
+title: "Practuca 6c"
+output: html_notebook
+---
+
+Datos jaja:
+https://rpubs.com/daniballari/exploracion_datos
+
+```{r}
+library(factoextra) 
+library(clusterCrit)
+```
+
+```{r}
+data("trees")
+df<-trees
+str(df)
+```
+
+```{r}
+data<-scale(df)
+
+range_k=2:10
+dunn_kmeans<-c()
+set.seed(123)
+for (k in range_k){
+  set.seed(123)
+  kmeans<-stats::kmeans(x=data,centers = k,nstart = 25)
+  index_internal_kmeans<-clusterCrit::intCriteria(traj = data,part = as.integer(kmeans$cluster),crit = "dunn")
+  dunn_kmeans[k-1]<-index_internal_kmeans$dunn
+}
+
+```
+
+```{r}
+plot_dunn_kmeans <- ggplot2::qplot(x = range_k, y = dunn_kmeans, geom = 'line', main = 'k-means', xlab = 'k', ylab = 'Distance Ratio')
+
+plot_dunn_kmeans <- plot_dunn_kmeans +theme_bw() 
+
+geom_vline(xintercept = range_k[which.max(dunn_kmeans)],linetype= 2, color='red')   
+
+plot_dunn_kmeans
+```
+
+```{r}
+kmeans <- stats::kmeans(x = data, 
+                        centers = range_k[which.max(dunn_kmeans)], 
+                        nstart = 25)
+```
+
+
+```{r}
+plot_kmeans <- factoextra::fviz_cluster(object = kmeans,
+                                        data = data,
+                                        stand = F, 
+                                        geom =  'point', 
+                                        ellipse.type = 'convex',
+                                        ellipse = T,
+                                        main = paste('Clustering: k-means k:', range_k[which.max(dunn_kmeans)]),
+                                        outlier.color = 'black',
+                                        show.clust.cent = T)
+
+plot_kmeans <- plot_kmeans + 
+  theme_bw() +
+  theme(legend.position = 'bottom')  
+
+plot_kmeans
+```
+
